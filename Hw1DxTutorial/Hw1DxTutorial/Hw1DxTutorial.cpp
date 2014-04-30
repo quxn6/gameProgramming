@@ -37,7 +37,7 @@ HRESULT InitD3D(HWND hWnd)
 	d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 
 	if (FAILED(g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+		D3DCREATE_HARDWARE_VERTEXPROCESSING,
 		&d3dpp, &g_pD3DDevice)))
 	{
 		return E_FAIL;
@@ -130,9 +130,9 @@ HRESULT InitGeometry()
 
 	LPD3DXBUFFER pD3DXMtrlBuffer;
 
-	if (FAILED(D3DXLoadMeshFromX(L"Tiger.x", D3DXMESH_SYSTEMMEM, g_pD3DDevice, NULL, &pD3DXMtrlBuffer, NULL, &g_dwNumMaterials, &g_pMesh)))
+	if (FAILED(D3DXLoadMeshFromX(L"bong.x", D3DXMESH_SYSTEMMEM, g_pD3DDevice, NULL, &pD3DXMtrlBuffer, NULL, &g_dwNumMaterials, &g_pMesh)))
 	{
-		if (FAILED(D3DXLoadMeshFromX(L"..\\Tiger.x", D3DXMESH_SYSTEMMEM, g_pD3DDevice, NULL, &pD3DXMtrlBuffer, NULL, &g_dwNumMaterials, &g_pMesh)))
+		if (FAILED(D3DXLoadMeshFromX(L"..\\bong.x", D3DXMESH_SYSTEMMEM, g_pD3DDevice, NULL, &pD3DXMtrlBuffer, NULL, &g_dwNumMaterials, &g_pMesh)))
 		{
 			MessageBox(NULL, L"No tiger.x", L"Meshes.exe", MB_OK);
 			return E_FAIL;
@@ -219,6 +219,11 @@ VOID Cleanup()
 		delete[] g_pMeshMaterials;
 	}
 
+	if ( g_pMesh != NULL )
+	{
+		g_pMesh->Release();
+	}
+
 }
 
 VOID SetupCylinderMatrix()
@@ -230,28 +235,96 @@ VOID SetupCylinderMatrix()
 
 }
 
-VOID SetupTigerMatrix(float x, float y, float z)
+// VOID SetupTigerMatrix( float x, float y, float z )
+// {
+// 	D3DXMATRIXA16 tigerWorld, tmp1, tmp2;
+// 	D3DXMatrixIdentity( &tigerWorld );
+// 	D3DXMatrixTranslation( &tmp1, x, y, z );
+// 	D3DXMatrixRotationY( &tmp2, timeGetTime() / 1000.0f );
+// 	D3DXMatrixMultiply( &tigerWorld, &tmp1, &tmp2 );
+// 	g_pD3DDevice->SetTransform( D3DTS_WORLD, &tigerWorld );
+// 	g_pD3DDevice->MultiplyTransform( D3DTS_WORLD, &tmp2 );
+// }
+
+D3DXMATRIXA16 tigerWorld;
+D3DXMATRIXA16 bonggoWorld;
+
+VOID SetupTigerMatrix( float x, float y, float z )
 {
-	D3DXMATRIXA16 tigerWorld, tmp1, tmp2;
-	D3DXMatrixIdentity(&tigerWorld);
-	D3DXMatrixTranslation(&tmp1, x, y, z);
-	D3DXMatrixRotationY(&tmp2, timeGetTime() / 1000.0f);
-	D3DXMatrixMultiply(&tigerWorld, &tmp1, &tmp2);
-	g_pD3DDevice->SetTransform(D3DTS_WORLD, &tigerWorld);
-	g_pD3DDevice->MultiplyTransform( D3DTS_WORLD, &tmp2 );
+//	D3DXMATRIXA16 tigerWorld, tmp1, tmp2;
+	
+	D3DXQUATERNION	quaternionRotation;
+	
+	D3DXVECTOR3 position( 5.0f, .0f, .0f );
+	D3DXVECTOR3 rotation( .0f, 90.0f, .0f );
+	D3DXVECTOR3 scale( 1.0f, 1.0f, 1.0f );
+
+	D3DXMatrixIdentity( &tigerWorld );	
+	
+	D3DXQuaternionRotationYawPitchRoll( &quaternionRotation, D3DXToRadian( rotation.y ), D3DXToRadian( rotation.x), D3DXToRadian( rotation.z) );
+
+		
+//	D3DXMatrixTranslation( &tmp1, x, y, z );
+// 	D3DXMatrixRotationY( &tmp2, timeGetTime() / 1000.0f );
+// 	D3DXMatrixMultiply( &tigerWorld, &tmp1, &tmp2 );
+
+
+	D3DXMatrixTransformation( &tigerWorld, NULL, NULL, &scale, NULL, &quaternionRotation, &position );
+
+	//D3DXMatrixAffineTransformation( &tigerWorld, 1.0f, NULL, &quaternionRotation, &transf );
+
+	g_pD3DDevice->SetTransform( D3DTS_WORLD, &tigerWorld );
+//	g_pD3DDevice->MultiplyTransform( D3DTS_WORLD, &tmp2 );
+}
+
+VOID SetupBonggoMatrix( float x, float y, float z )
+{
+	D3DXQUATERNION	quaternionRotation;
+
+	D3DXVECTOR3 position( .0f, 5.0f, .0f );
+	D3DXVECTOR3 rotation( .0f, 90.0f, .0f );
+	D3DXVECTOR3 scale( 1.0f, 1.0f, 1.0f );
+
+	D3DXMatrixIdentity( &bonggoWorld );
+
+	D3DXQuaternionRotationYawPitchRoll( &quaternionRotation, D3DXToRadian( rotation.y ), D3DXToRadian( rotation.x ), D3DXToRadian( rotation.z ) );
+	
+	D3DXMatrixTransformation( &bonggoWorld, NULL, NULL, &scale, NULL, &quaternionRotation, &position );
+
+	g_pD3DDevice->SetTransform( D3DTS_WORLD, &bonggoWorld );
+}
+
+VOID SetupBonggoMatrix2( float x, float y, float z )
+{
+	D3DXQUATERNION	quaternionRotation;
+
+	D3DXMATRIXA16 bonggoWorld2;
+	D3DXMatrixIdentity( &bonggoWorld2 );
+	D3DXMatrixMultiply( &bonggoWorld2, &bonggoWorld, &tigerWorld );
+	g_pD3DDevice->SetTransform( D3DTS_WORLD, &bonggoWorld2 );
+}
+
+VOID SetupBonggoMatrix3( float x, float y, float z )
+{
+	D3DXQUATERNION	quaternionRotation;
+
+	D3DXMATRIXA16 bonggoWorld3;
+	D3DXMatrixIdentity( &bonggoWorld3 );
+	D3DXMatrixMultiply( &bonggoWorld3, &tigerWorld, &bonggoWorld );
+	g_pD3DDevice->SetTransform( D3DTS_WORLD, &bonggoWorld3 );
 }
 
 VOID SetupMatrices()
 {
-	D3DXVECTOR3 vEyePt(0.0f, 3.0f, -10.0f);
-	D3DXVECTOR3 vLookatPt(0.0f, 0.0f, 0.0f);
-	D3DXVECTOR3 vUpVec(0.0f, 1.0f, 0.0f);
+	D3DXVECTOR3 vEyePt(0.0f, 20.0f, 0.0f);	
+	D3DXVECTOR3 vLookatPt( 0.0f, 0.0f, 0.0f );
+	D3DXVECTOR3 vUpVec(0.0f, .0f, 1.0f);
 	D3DXMATRIXA16 matView;
 	D3DXMatrixLookAtLH(&matView, &vEyePt, &vLookatPt, &vUpVec);
 	g_pD3DDevice->SetTransform(D3DTS_VIEW, &matView);
 
 	D3DXMATRIXA16 matProj;
-	D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI / 4, 1.0f, 1.0f, 100.0f);
+	D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI/4 , 1.0f, 1.0f, 1000.0f);
 	g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &matProj);
 
 }
@@ -279,9 +352,12 @@ VOID SetupLights01()
 	D3DLIGHT9 light;
 	ZeroMemory(&light, sizeof(D3DLIGHT9));
 	light.Type = D3DLIGHT_DIRECTIONAL;
-	light.Diffuse.r = 1.0f;
-	light.Diffuse.g = 1.0f;
-	light.Diffuse.b = 1.0f;
+	float a = ( rand() % 10 );
+	float b = a/10;
+
+	light.Diffuse.r = b;
+	light.Diffuse.g = b;
+	light.Diffuse.b = b;
 	vecDir = D3DXVECTOR3(cosf(timeGetTime() / 350.0f),
 		1.0f,
 		sinf(timeGetTime() / 350.f));
@@ -339,7 +415,6 @@ VOID Render()
 
 	if (SUCCEEDED(g_pD3DDevice->BeginScene()))
 	{
-		SetupMaterials();
 
 		if (1 == (timeGetTime() / 1000) % 2)
 		{
@@ -350,20 +425,22 @@ VOID Render()
 			SetupLights02();			
 		}
 
-		if ( 1 == (timeGetTime() / 2000) % 2 )
-		{
-			SetupTexture01();
-		}
-		else
-		{
-			SetupTexture02();
-		}
 
-		SetupCylinderMatrix();	
 
-		g_pD3DDevice->SetStreamSource(0, g_pVB, 0, sizeof(CUSTOMVERTEX));
-		g_pD3DDevice->SetFVF(D3DFVF_CUSTOMVERTEX);
-		g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2 * 50 - 2);
+// 		SetupCylinderMatrix();
+// 		SetupMaterials();
+// 
+// 		if ( 1 == ( timeGetTime() / 2000 ) % 2 )
+// 		{
+// 			SetupTexture01();
+// 		}
+// 		else
+// 		{
+// 			SetupTexture02();
+// 		}
+// 		g_pD3DDevice->SetStreamSource( 0, g_pVB, 0, sizeof( CUSTOMVERTEX ) );
+// 		g_pD3DDevice->SetFVF( D3DFVF_CUSTOMVERTEX );
+// 		g_pD3DDevice->DrawPrimitive( D3DPT_TRIANGLESTRIP, 0, 2 * 50 - 2 );
 
 
 		SetupTigerMatrix( 3.0f, 0.0f, 0.0f );
@@ -375,7 +452,24 @@ VOID Render()
 			g_pMesh->DrawSubset( i );
 		}
 
-		SetupTigerMatrix( -3.0f, 0.0f, 0.0f );
+		SetupBonggoMatrix( -3.0f, 0.0f, 0.0f );
+		for ( DWORD i = 0; i < g_dwNumMaterials; ++i )
+		{
+			g_pD3DDevice->SetMaterial( &g_pMeshMaterials[i] );
+			g_pD3DDevice->SetTexture( 0, g_pMeshTexture[i] );
+
+			g_pMesh->DrawSubset( i );
+		}
+		
+		SetupBonggoMatrix2( -3.0f, 0.0f, 0.0f );
+		for ( DWORD i = 0; i < g_dwNumMaterials; ++i )
+		{
+			g_pD3DDevice->SetMaterial( &g_pMeshMaterials[i] );
+			g_pD3DDevice->SetTexture( 0, g_pMeshTexture[i] );
+
+			g_pMesh->DrawSubset( i );
+		}
+		SetupBonggoMatrix3( -3.0f, 0.0f, 0.0f );
 		for ( DWORD i = 0; i < g_dwNumMaterials; ++i )
 		{
 			g_pD3DDevice->SetMaterial( &g_pMeshMaterials[i] );
