@@ -111,7 +111,7 @@ bool DDRenderer::Clear()
 
 	hr = m_pD3DDevice->Clear(
 		0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
-		D3DCOLOR_XRGB( 0, 0, 0 ), 1.0f, 0 );
+		D3DCOLOR_XRGB( 100, 100, 100 ), 1.0f, 0 );
 
 	if ( FAILED( hr ) )
 		return false;

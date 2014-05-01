@@ -13,6 +13,7 @@ public:
 	//static DDModel* Create( wchar_t* filePath );	
 
 protected:
+	virtual void RenderItSelf();
 	bool InitModel( std::wstring path );
 	bool SetNormalVector();
 	bool Cleanup();
@@ -25,6 +26,5 @@ protected:
 	DWORD				m_dwNumMaterials = 0L;
 
 private:
-	virtual void RenderItSelf();
 };
 
